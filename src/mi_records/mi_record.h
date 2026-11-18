@@ -1,12 +1,15 @@
-#ifndef MDBG_SRC_VALUES_MI_LINE_CONTAINER_H_
-#define MDBG_SRC_VALUES_MI_LINE_CONTAINER_H_
+#ifndef MDBG_SRC_MI_RECORD_MI_RECORD_H_
+#define MDBG_SRC_MI_RECORD_MI_RECORD_H_
 
 
 #include <string>
+#include <cstdint>
 
 
 namespace Mi {
 
+
+constexpr size_t NO_TOKEN = SIZE_MAX;
 
 
 enum class RecordType {
@@ -27,12 +30,13 @@ enum class RecordType {
 };
 
 
-
 struct Record {
     Mi::RecordType type;
     size_t token;
     std::string text;
 };
+
+Record Classify(const std::string& raw_record);
 
 
 } // namespace Mi
