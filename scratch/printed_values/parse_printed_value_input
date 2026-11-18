@@ -1,21 +1,7 @@
-{name="argc",arg="1",type="int",value="1"}
-{name="argv",arg="1",type="char **",value="0x7fffffffe4a8"}
-{name="i",type="int",value="0"}
-{name="total",type="double",value="3.1400000000000001"}
-{name="done",type="bool",value="false"}
-{name="name",type="const char *",value="0x555555556004 \"hello world\""}
-{name="c",type="char",value="97 'a'"}
-{name="s",type="const char *",value="0x555555556010 \"say \\\"hi\\\"\\n\\tpath=C:\\\\tmp\""}
+name="a"
+type="int"
+value="0"
 
 
+^done,variables=[{name="a",type="int",value="0"},{name="b",type="int",value="0"},{name="struct_a",type="struct_A"},{name="vec",type="std::vector<int, std::allocator<int> >"}]
 
-{name="nl",type="char",value="10 '\\n'"}
-
-{name="p",type="Point"}
-{name="pp",type="Point *",value="0x7fffffffe3f0"}
-{name="arr",type="int [4]"}
-{name="p",type="Point",value="{x = 1, y = 2}"}
-{name="arr",type="int [4]",value="{1, 2, 3, 4}"}
-[{name="v",type="std::vector<int, std::allocator<int> >",value="std::vector of length 3, capacity 3 = {1, 2, 3}"},{name="str",type="std::string",value="\"hello\""}]
-[{name="mode",type="Mode",value="MODE_FAST"},{name="cb",type="void (*)(int)",value="0x555555555189 <on_event(int)>"},{name="r",arg="1",type="int &",value="@0x7fffffffe3ac: 5"},{name="np",type="int *",value="0x0"},{name="flags",type="unsigned int",value="4294967295"}]
-[{name="tmp",type="int",value="<optimized out>"},{name="buf",type="char [8]",value="\"abc\\000\\000\\000\\000\""},{name="u",type="char",value="-61 '\\303'"}]
