@@ -12,11 +12,11 @@ file(GLOB_RECURSE MI_RECORDS_SOURCES CONFIGURE_DEPENDS
     ${PROJECT_SOURCE_DIR}/src/mi_records/*.cpp
 )
 add_library(mi_records STATIC ${MI_RECORDS_SOURCES})
-target_include_directories(mi_records PUBLIC ${PROJECT_SOURCE_DIR}/src)
+target_include_directories(mi_records PUBLIC ${PROJECT_SOURCE_DIR}/src/mi_records)
 target_compile_options(mi_records PRIVATE ${WARNING_FLAGS})
 
 # --- main executable ------------------------------------------------------
-add_executable(motiondbg ${PROJECT_SOURCE_DIR}/src/main.cpp)
+add_executable(motiondbg ${PROJECT_SOURCE_DIR}/src/main.cpp )
 target_link_libraries(motiondbg PRIVATE mi_records)
 target_compile_options(motiondbg PRIVATE ${WARNING_FLAGS})
 

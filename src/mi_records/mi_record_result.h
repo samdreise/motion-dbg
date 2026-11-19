@@ -53,7 +53,7 @@ class StackObjects {
 public:
     void populate(Mi::Record& rec);
     
-
+    
 
 private:
     
