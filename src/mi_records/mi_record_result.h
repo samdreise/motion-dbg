@@ -8,103 +8,11 @@
 #include <unordered_map>
 #include <vector>
 #include <cstdint>
+#include "string_helpers.h"
+
 
 
 namespace Mi {
-
-
-enum class ValueKind : uint8_t {
-    Invalid,
-    String,
-    Tuple,
-    List
-};
-
-struct Value {
-    std::string text;
-    Mi::ValueKind kind;
-};
-
-struct SVHash {
-    using is_transparent = void;
-    size_t operator()(std::string_view sv) const noexcept { 
-        return std::hash<std::string_view>{}(sv); 
-    }
-};
-
-
-
-struct VarObject {
-    std::string name;
-    std::string expression;
-    std::string type;
-    Mi::Value value;
-    VarObject* parent = nullptr;
-
-    std::vector<std::unique_ptr<VarObject>> children;
-    
-    bool hidden = false;
-    bool in_scope = true;
-    bool changed = false;
-    bool dynamic = false;
-    bool has_more = false;
-};
-
-
-class StackObjects {
-public:
-    void populate(Mi::Record& rec);
-    
-    
-
-private:
-    
-    std::vector<std::unique_ptr<VarObject>> root_var_objects_;
-    std::unordered_map<std::string, Mi::VarObject*, Mi::SVHash, std::equal_to<>> var_map_;
-    std::vector<VarObject*> changed_;
-    std::vector<std::string_view> root_var_names_;
-
-    
-    bool get_local_var_names(std::string_view rec);
-    
-};
-
-
-
-
-
-
-
-
-
-
-
-
-inline std::string_view consume_till_char(std::string_view& sv, const char c) {
-
-    size_t pos = sv.find(c);
-    if (pos == std::string_view::npos) {
-        // at end so consume everything that's left.
-        std::string_view rest = sv;
-        sv = {};
-        return rest;
-    }
-
-    std::string_view field_value = sv.substr(0, pos);
-    sv.remove_prefix(pos + 1);
-    return field_value;
-
-}
-
-inline bool consume_string(std::string_view& sv, const std::string_view key) {
-
-    size_t pos = sv.find(key);
-    if (pos == std::string_view::npos) return false;
-    sv.remove_prefix(pos + key.size());
-    return true;
-
-}
-
 
 
 
@@ -128,12 +36,13 @@ enum class VarField : uint8_t {
 };
 
 // MI grammar: { "variable"="value", }
-struct VarFieldEntry {
+struct VarFieldParseKey {
     std::string_view variable;  //variable / key
     VarField field;          //value (variable = value)
 };
 
-inline constexpr VarFieldEntry kVarFields[] = {
+// helper array to pass all name=, numchild=. exp= etc from a ^ miline
+inline constexpr VarFieldParseKey kVarFieldParseKeys[] = {
     {.variable = "name",        .field = VarField::Name},
     {.variable = "value",       .field = VarField::Value},
     {.variable = "type",        .field = VarField::Type},
@@ -147,20 +56,57 @@ inline constexpr VarFieldEntry kVarFields[] = {
     {.variable = "exp",         .field = VarField::Exp},
 };
 
-inline VarField consume_variable(std::string_view& sv) {
+// if VarField = value, then Value's "kind" must be of the following types:
+enum class ValueKind : uint8_t {
+    Invalid,
+    String,
+    Tuple,
+    List
+};
 
-    consume_till_char(sv, ',');
+struct Value {
+    std::string text;
+    Mi::ValueKind kind; 
+    std::vector<std::string> array;
+};
 
-    size_t eq_pos = sv.find('=');
-    if (eq_pos == std::string::npos) {
+class VarObject {
+public:
+    VarObject(const Mi::Record& record);
+    std::string name;
+    std::string expression;
+    std::string type;
+    Mi::Value value;
+
+    std::vector<std::unique_ptr<VarObject>> children;
+    
+    bool hidden = false;
+    bool in_scope = true;
+    bool changed = false;
+    bool dynamic = false;
+    bool has_more = false;
+    
+private:
+    
+    VarObject* parent = nullptr;
+};
+
+inline std::string_view TEMPORARY_POP_DONE(Mi::Record &record) {
+    std::string_view sv = record.offset_string_view();
+    split_at_char(sv, ',');
+    return sv;
+}
+
+inline VarField consume_variable_field(std::string_view& sv) {
+    
+
+    std::string_view variable = split_at_char(sv, '=');
+     
+    if (sv.empty()) {
         return Mi::VarField::Invalid;
     }
 
-    std::string_view variable = sv.substr(0, eq_pos);
-
-    sv.remove_prefix(eq_pos + 1); // remove front of string_view until the char after the '=' sign
-    
-    for (const auto& var_obj_field : kVarFields) {
+    for (const auto& var_obj_field : kVarFieldParseKeys) {
         if (variable == var_obj_field.variable) { // comparing the strings
 
             return var_obj_field.field; // strings match so return the enumed type
@@ -171,40 +117,32 @@ inline VarField consume_variable(std::string_view& sv) {
     return Mi::VarField::Unknown;   // fallthrough case is ::Unknown
 }
 
-
-
-inline std::string_view consume_value_field(std::string_view& sv) {
-    Mi::Value value;
-    if (sv.empty()) value.kind = Mi::ValueKind::Invalid;
-    switch (sv.front()) {
-        case '"': value.kind = ValueKind::String;
-        case '{': value.kind = ValueKind::Tuple;
-        case '[': value.kind = ValueKind::List;
-        default:  value.kind = ValueKind::Invalid;
-    }
-
-
-}
-
-inline VarObject createVarObject(const Mi::Record& rec) {
-     
-    std::string_view sv = rec.offset_string_view();
-    VarObject var;
-   
-    
-    while(!sv.empty()) {
-        VarField vf = consume_variable(sv);
-        switch (vf) {
-            case Mi::VarField::Name:    var.name = consume_till_char(sv,'"');   break;
-            case Mi::VarField::Type:    var.type = consume_till_char(sv,'"');   break;
-            case Mi::VarField::Value:   var.value = consume_value_field(sv);    break; 
-            case Mi::VarField::Dynamic: var.dynamic = true; break;
-            default: consume_till_char(sv,'"');
+inline std::vector<std::string_view> parse_stack_list_locals(std::string_view &sv) {
+    split_at_char(sv, '[');
+    std::vector<std::string_view> stack_locals;
+    while (!sv.empty()) {
+        std::string_view key = "name=";
+        if (split_at_char(sv, '"') != key) { // consume the name=" component
+            return stack_locals;
         }
+        stack_locals.push_back(split_at_char(sv, '"')); // push_back the name
+        
+        sv.remove_prefix(1); // remove the ',' at front of string
+        
     }
-    
-    return var;
+
+    return stack_locals;
 }
+
+
+
+
+
+
+
+
+
+
 
 } // namespace Mi
 

@@ -1,6 +1,61 @@
 #include "mi_record_result.h"
 
 
+
+
+
+static inline Mi::ValueKind get_mi_value_kind(std::string_view& sv) {
+    Mi::ValueKind kind;
+    if (sv.empty()) kind = Mi::ValueKind::Invalid;
+    switch (sv.front()) {
+        case '"': kind = Mi::ValueKind::String;
+        case '{': kind = Mi::ValueKind::Tuple;
+        case '[': kind = Mi::ValueKind::List;
+        default:  kind = Mi::ValueKind::Invalid;
+    }
+    
+
+    return kind;
+}
+
+Mi::VarObject::VarObject(const Mi::Record& rec) {
+     
+    std::string_view sv = rec.offset_string_view();
+    
+    
+    while(!sv.empty()) {
+        VarField vf = consume_variable_field(sv);
+        switch (vf) {
+            case Mi::VarField::Name:    name = split_at_char(sv,'"');   break;
+            case Mi::VarField::Type:    type = split_at_char(sv,'"');   break;
+            case Mi::VarField::Dynamic: dynamic = true; break;
+            case Mi::VarField::Value:
+                Mi::ValueKind kind = get_mi_value_kind(sv);
+                break;
+
+
+        }
+    }
+    
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
 void Mi::StackObjects::populate(Mi::Record &record) {
 
     if (record.type != Mi::RecordType::Result) {
@@ -11,8 +66,9 @@ void Mi::StackObjects::populate(Mi::Record &record) {
     
 
 }
+*/
 
-
+/*
 bool Mi::StackObjects::get_local_var_names(std::string_view rec) {
     constexpr std::string_view key = "name=\"";
 
@@ -28,3 +84,4 @@ bool Mi::StackObjects::get_local_var_names(std::string_view rec) {
     return true;
 
 }
+*/
