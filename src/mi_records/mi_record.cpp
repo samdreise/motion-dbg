@@ -1,6 +1,6 @@
 #include "mi_record.h"
 
-Mi::Record Mi::Classify(const std::string& raw_record) {
+Mi::Record Mi::ClassifyLine(const std::string& raw_record) {
 
     Record record;
 
@@ -46,6 +46,8 @@ Mi::Record Mi::Classify(const std::string& raw_record) {
     if (i > 0) {
         record.token = token;
     }
+
+    record.cursor = i + 1; // first char after the type ( '*' '@' ) character
     
     return record;
 

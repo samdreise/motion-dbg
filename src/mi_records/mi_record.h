@@ -4,6 +4,7 @@
 
 #include <string>
 #include <cstdint>
+#include <string_view>
 
 
 namespace Mi {
@@ -12,7 +13,7 @@ namespace Mi {
 constexpr size_t NO_TOKEN = SIZE_MAX;
 
 
-enum class RecordType {
+enum class RecordType : uint8_t {
 
     Result,             // ^   reply to user cmd ^done, ^error, ^exit
     ExecAsync,          // *   execution state changed: *stopped, *running
@@ -34,9 +35,16 @@ struct Record {
     Mi::RecordType type;
     size_t token;
     std::string text;
+    size_t cursor;
+
+    std::string_view offset_string_view() const {
+        return std::string_view(text).substr(cursor);
+    }
+    
 };
 
-Record Classify(const std::string& raw_record);
+Record ClassifyLine(const std::string& raw_record);
+
 
 
 } // namespace Mi
