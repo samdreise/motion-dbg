@@ -1,2 +1,6 @@
-text1
-text2
+0^done,locals=[name="ez_int",name="some_text",name="struct_object"]
+1^done,name="var1",numchild="0",value="32767",type="int",thread-id="1",has_more="0"
+2^done,name="var2",numchild="0",value="\"\"",type="std::string",thread-id="1",displayhint="string",dynamic="1",has_more="0"
+3^done,name="var3",numchild="1",value="{...}",type="StructObject",thread-id="1",has_more="0"
+4^done,numchild="1",children=[child={name="var3.public",exp="public",numchild="4",value="",thread-id="1"}],has_more="0"
+5^done,numchild="4",children=[child={name="var3.public.its_a_bool",exp="its_a_bool",numchild="0",value="208",type="bool",thread-id="1"},child={name="var3.public.coordinates",exp="coordinates",numchild="1",value="{...}",type="Coordinates",thread-id="1"},child={name="var3.public.raw_text",exp="raw_text",numchild="0",value="<error: Cannot access memory at address 0x12000>",type="std::string",thread-id="1",displayhint="string",dynamic="1"},child={name="var3.public.vec_array",exp="vec_array",numchild="0",value="std::vector of length 0, capacity 0",type="std::vector<float, std::allocator<float> >",thread-id="1",displayhint="array",dynamic="1"}],has_more="0"

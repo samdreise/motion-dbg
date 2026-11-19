@@ -25,7 +25,7 @@ public:
         file.close();
     }
 
-    std::string_view send() {
+    std::string& send() {
         return cmds_[cmd_counter_++];
     }
 
