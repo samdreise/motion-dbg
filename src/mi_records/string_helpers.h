@@ -16,7 +16,7 @@
  * 
  * 
 */
-inline std::string_view split_at_char(std::string_view& sv, const char c) {
+inline std::string_view cSplitAtChar(std::string_view& sv, const char c) {
 
 
     size_t pos = sv.find(c);
@@ -33,7 +33,7 @@ inline std::string_view split_at_char(std::string_view& sv, const char c) {
 
 }
 
-inline bool consume_until_alpha(std::string_view &sv) {
+inline bool cConsumeUntilAlpha(std::string_view &sv) {
     bool found_char = false;
     while(!sv.empty() && !(found_char = std::isalpha(sv[0]))) {
         sv.remove_prefix(1);
@@ -48,71 +48,106 @@ static inline __attribute__((always_inline)) bool IsOctalDigit(char character) {
 }
 
 
-inline bool ParseAsStringLiteral(const std::string_view& text, size_t& pos, std::string& out) {
 
-    if (pos >= text.size() || text[pos] != '"') {
-        return false;
+/* 
+ * @brief - pass in a string_view to return an escape stripped string 
+ *
+ * @usage - pass in a string_view of a record which has been consumed up
+ * till the first " of the string, ie, the record:
+ *
+ * value="\"Hello\\n\"",type="std::string", ...
+ *
+ * should be passed through as:
+ *
+ * "\"Hello\\n\"",type="std::string", ...
+ *
+ *  "Hello\n" will then be returned and sv will be consumed up until 
+ *  the ',' before type so sv = ",type="std::string", ... "
+*/
+inline std::string cCreateUnescapedString(std::string_view& sv) {
+
+    if (sv[0] != '"') {
+        return "<Malformed string>";
     }
 
     std::string unescaped;
-    size_t cursor = pos + 1; // walks the text; pos is only updated once we know the whole string is valid
+    size_t n = 1; // start at 1 to skip first "
 
-    while (cursor < text.size()) {
-        char current = text[cursor]; 
+    while (n < sv.size()) {
+        char current = sv[n]; 
+
+
+        /* check first if the current char is a " as if there is a preceding \ to
+        escape any given " this " will never have been read as we skip over it
+        intentionally to ensure we read till end of string literal */
+
 
         if (current == '"') { // unescaped quote: end of the string
-            out = unescaped; // value of string
-            pos = cursor + 1;// generally keep parsing from here
-            return true;
+            sv.remove_prefix(n); // remove parsed string literal from from front
+            return unescaped;
         }
 
-        // looking for \n \r \\ \0 and escape sequences etc
+        // looking for \" \n \r \\ \0 and escape sequences etc
         if (current != '\\') { // ordinary character
             unescaped.push_back(current);
-            cursor++;
+            n++;
             continue;
         }
 
-        cursor++; // step onto the character after the backslash
-        if (cursor >= text.size()) {
-            return false; // text ended right after a backslash
+        n++; // step onto the character after the backslash
+        if (n >= sv.size()) {
+            sv = {};
+            return unescaped + " ... <MDGB> parsed record malformed (ended after a backslash)"; // text ended right after a backslash
+            
         }
 
-        char escaped = text[cursor];
+        char escape_char_type = sv[n];
 
         // three octal digits are one byte ie \303 is 0xC3
-        bool is_octal_escape = IsOctalDigit(escaped) &&             //  3
-                               cursor + 2 < text.size() && // make sure we don't read past end of string (ewpsy)
-                               IsOctalDigit(text[cursor + 1]) &&    //  0
-                               IsOctalDigit(text[cursor + 2]);      //  3  <- read an octal
+        bool is_octal_escape = IsOctalDigit(escape_char_type) &&             //  3
+                               n + 2 < sv.size() && // make sure we don't read past end of string (ewpsy)
+                               IsOctalDigit(sv[n + 1]) &&    //  0
+                               IsOctalDigit(sv[n + 2]);      //  3  <- read an octal
 
 
         if (is_octal_escape) {
-            int byte_value  = (escaped - '0') * 64              // c0 * 8^2
-                            + (text[cursor + 1] - '0') * 8      // c1 * 8^1
-                            + (text[cursor + 2] - '0');         // c2 * 8^0
+            int byte_value  = (escape_char_type - '0') * 64              // c0 * 8^2
+                            + (sv[n + 1] - '0') * 8      // c1 * 8^1
+                            + (sv[n + 2] - '0');         // c2 * 8^0
             
             
             unescaped.push_back(static_cast<char>(byte_value & 0xFF)); // converted to hex to display as a byte -> 0xC3
 
-            cursor += 3; // consume all 3 chars in the octal and read from next
+            n += 3; // consume all 3 chars in the octal and read from next
             continue;
         }
 
-        switch (escaped) {
+        switch (escape_char_type) {
             case 'n': unescaped.push_back('\n'); break;
             case 't': unescaped.push_back('\t'); break;
             case 'e': unescaped.push_back('\033'); break; // an escape sequence for a gdb color code (ESC = byte 27)
-            default:  unescaped.push_back(escaped); break; // covers \" and \\ + keeps char of any other escape
+            default:  unescaped.push_back(escape_char_type); break; // covers \" and \\ + keeps char of any other escape
         }
-        cursor++;
+        n++;
     }
 
-    return false; // no closing quote before end of string
+    sv = {};
+    return unescaped + " ... <MGDB> parsed record malformed (non-terminating string)"; // no closing quote before end of string
+    
 }
 
+inline size_t cStringViewToSizeT (std::string_view& sv) {
+    // using char arithmatic to detect integer digits
+    size_t num = 0;
 
+    while (!sv.empty() && sv.front() >= '0' && sv.front() <= '9'  )
+    {
+        num = num * 10 + (sv.front() - '0');
+        sv.remove_prefix(1);
+    }
 
+    return num;
+}
 
 /*
 inline bool consume_string(std::string_view& sv, const std::string_view key) {

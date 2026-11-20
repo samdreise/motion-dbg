@@ -35,7 +35,7 @@ struct Record {
     Mi::RecordType type;
     size_t token;
     std::string text;
-    size_t cursor;
+    size_t cursor = 0;
 
     std::string_view offset_string_view() const {
         return std::string_view(text).substr(cursor);

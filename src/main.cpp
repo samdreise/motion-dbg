@@ -6,12 +6,16 @@
 
 
 int main() {
+    std::string nums = "123hey";
+    std::string_view sv = nums;
+    size_t n = cStringViewToSizeT(sv);
+    std::cout << n << "\n";
     std::string string1 = "Hello-string";
     std::string_view sv1 = string1;
     std::string string2 = "+-)";
     std::string_view sv2 = string2;
-    split_at_char(sv1, '-');
-    bool found_char = consume_until_alpha(sv2);
+    cSplitAtChar(sv1, '-');
+    bool found_char = cConsumeUntilAlpha(sv2);
 
 
     TestCmdSender sender("src/file.txt");
@@ -21,6 +25,8 @@ int main() {
    
 
     std::vector<std::string_view> locallist = Mi::parse_stack_list_locals(locals);
+
+    Mi::VarObject var(var_create_var1);
     
     return 0;
 }

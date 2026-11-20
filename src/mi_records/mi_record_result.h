@@ -64,22 +64,27 @@ enum class ValueKind : uint8_t {
     List
 };
 
+/*
 struct Value {
     std::string text;
     Mi::ValueKind kind; 
     std::vector<std::string> array;
 };
+*/
 
 class VarObject {
 public:
-    VarObject(const Mi::Record& record);
+    VarObject(Mi::Record& record);
+    void ParseMiValueField(std::string_view& sv);
+
     std::string name;
     std::string expression;
     std::string type;
-    Mi::Value value;
+    std::string value;
 
     std::vector<std::unique_ptr<VarObject>> children;
-    
+    size_t numchild = 0;
+    size_t threadid = 0;
     bool hidden = false;
     bool in_scope = true;
     bool changed = false;
@@ -93,14 +98,14 @@ private:
 
 inline std::string_view TEMPORARY_POP_DONE(Mi::Record &record) {
     std::string_view sv = record.offset_string_view();
-    split_at_char(sv, ',');
+    cSplitAtChar(sv, ',');
     return sv;
 }
 
 inline VarField consume_variable_field(std::string_view& sv) {
     
 
-    std::string_view variable = split_at_char(sv, '=');
+    std::string_view variable = cSplitAtChar(sv, '=');
      
     if (sv.empty()) {
         return Mi::VarField::Invalid;
@@ -117,15 +122,16 @@ inline VarField consume_variable_field(std::string_view& sv) {
     return Mi::VarField::Unknown;   // fallthrough case is ::Unknown
 }
 
+
 inline std::vector<std::string_view> parse_stack_list_locals(std::string_view &sv) {
-    split_at_char(sv, '[');
+    cSplitAtChar(sv, '[');
     std::vector<std::string_view> stack_locals;
     while (!sv.empty()) {
         std::string_view key = "name=";
-        if (split_at_char(sv, '"') != key) { // consume the name=" component
+        if (cSplitAtChar(sv, '"') != key) { // consume the name=" component
             return stack_locals;
         }
-        stack_locals.push_back(split_at_char(sv, '"')); // push_back the name
+        stack_locals.push_back(cSplitAtChar(sv, '"')); // push_back the name
         
         sv.remove_prefix(1); // remove the ',' at front of string
         
