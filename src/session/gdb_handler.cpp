@@ -219,15 +219,16 @@ void Mdbg::Handler::Stop() {
 
     bool exit_success = WaitForExit(500); // give gdb time to process exit requst before escalating
 
-    // gdb did not quit by itself (it is stuck in something)
+    // gdb did not quit by itself (it is stuck in something - heehee)
     // SIGINT was consumed(?) internally by gdb so we use TERM instead 
     if (!exit_success) {
         kill(pid_, SIGTERM);
         exit_success = WaitForExit(2000);
     }
 
+    //TBD jump straight to SIGKILL? what is the more humane option?
     if (!exit_success) {
-        kill(pid_, SIGKILL); // probably not needed
+        kill(pid_, SIGKILL); // probably not needed 
         waitpid(pid_, nullptr, 0);
     }
 
@@ -265,9 +266,13 @@ inline std::vector<std::string> ExtractCompleteLines(std::string& pending_text) 
 
         line_start = newline_pos + 1;
 
-        if (!line.empty() && line.back() == '\r') { // pop \r if the line ended in \r\n
+
+        #ifdef _WIN64
+        if (!line.empty() && line.back() == '\r') { // pop \r if the line ended in \n\r
             line.pop_back();
         }
+        #endif
+
 
         if (line.empty()) { // ignore empty lines
             continue;
