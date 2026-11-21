@@ -13,7 +13,13 @@ namespace Mdbg {
 
     constexpr int COMMAND_NOT_FOUND = 127; // used if execlp gdb falls through
     constexpr size_t CMD_SEND_FAIL = 0; // for prog counter
-
+    constexpr const char* const GDB_MI3_ARGS =      "gdb \
+                                                    --quiet \
+                                                    --interpreter=mi3 \
+                                                    -iex set style emoji off \
+                                                    -iex set confirm off \
+                                                    -iex set pagination off \
+                                                    -iex set mi-async on";
     
     class Handler // Owns the gdb process and the thread that reads its output
     {

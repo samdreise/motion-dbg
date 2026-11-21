@@ -25,20 +25,20 @@ bool Mdbg::Handler::Start(const std::string& debug_elf, const std::vector<std::s
         return false;
     }
 
-    // gdb's command line, built before fork: the child should only exec
-    std::vector<std::string> gdb_words = {"gdb", "-q", "--interpreter=mi3"};
+    // gdb's command line
+    std::vector<std::string> cmd = { GDB_MI3_ARGS };
     if (!program_arguments.empty()) {
-        gdb_words.emplace_back("--args");
+        cmd.emplace_back("--args");
     }
     if (!debug_elf.empty()) {
-        gdb_words.push_back(debug_elf);
+        cmd.push_back(debug_elf);
     }
     for (const std::string& argument : program_arguments) {
-        gdb_words.push_back(argument);
+        cmd.push_back(argument);
     }
 
     std::vector<char*> gdb_argv;
-    for (std::string& word : gdb_words) {
+    for (std::string& word : cmd) {
         gdb_argv.push_back(word.data());
     }
     gdb_argv.push_back(nullptr);
@@ -160,7 +160,6 @@ size_t Mdbg::Handler::SendCommand(const std::string& command) {
 
     return cmd_counter_++;
 }
-
 
 bool Mdbg::Handler::WriteAll(int fd, const char* buf, size_t bufBytes) {
 

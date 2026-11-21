@@ -3,3 +3,11 @@ build/
 compile_commands.json
 imgui.ini
 mitextdump/
+scratch/
+.motiondbg/
+sidelined/
+
+# python virtual envs
+.venv/
+__pycache__/
+pyrightconfig.json
